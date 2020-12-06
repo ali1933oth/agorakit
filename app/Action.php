@@ -2,6 +2,9 @@
 
 namespace App;
 
+use App\User;
+use App\Group;
+use App\Traits\HasControlledTags;
 use Cviebrock\EloquentTaggable\Taggable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,6 +19,7 @@ class Action extends Model
     use SoftDeletes;
     use Taggable;
     use SearchableTrait;
+    use HasControlledTags;
 
     protected $fillable = ['id']; // needed for actions import
 
@@ -27,7 +31,7 @@ class Action extends Model
         'stop'     => 'required',
     ];
 
-    protected $with = ['users']; // always load participants with actions
+    protected $with = ['attending']; // always load participants with actions
 
     protected $table = 'actions';
     public $timestamps = true;
@@ -58,12 +62,12 @@ class Action extends Model
 
     public function group()
     {
-        return $this->belongsTo(\App\Group::class)->withTrashed();
+        return $this->belongsTo(Group::class)->withTrashed();
     }
 
     public function user()
     {
-        return $this->belongsTo(\App\User::class)->withTrashed();
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function votes()
@@ -81,7 +85,25 @@ class Action extends Model
      */
     public function users()
     {
-        return $this->belongsToMany(\App\User::class);
+        return $this->belongsToMany(User::class)->wherePivot('status', '10');
+        // TODO candidate for deletion ?
+    }
+
+
+    /**
+     * The users attending this action.
+     */
+    public function attending()
+    {
+        return $this->belongsToMany(User::class)->wherePivot('status', '10');
+    }
+
+    /**
+     * The users NOT attending this action.
+     */
+    public function notAttending()
+    {
+        return $this->belongsToMany(User::class)->wherePivot('status', '-10');
     }
 
     /**

@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/v4-shims.css">
 
-  <link rel="stylesheet" href="{{ mix('/css/app.css') }}">
+  <link rel="stylesheet" href="{{ asset('/css/app.css') }}">
 
 
   <!-- additional css -->
@@ -25,11 +25,13 @@
 
 <body>
 
-  <div class="container mt-5" style="max-width: 35rem;">
+  <div class="container max-w-xl">
     @include('partials.errors')
   </div>
 
-  <div class="container main-container main-dialog">
+
+
+  <div class="container  main-container main-dialog mx-auto max-w-xl bg-white sm:shadow-xl sm:rounded-lg p-4 lg:p-8">
 
     <div class="dialog">
       @yield('content')

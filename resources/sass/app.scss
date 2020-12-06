@@ -1,24 +1,26 @@
 // Variables
 @import "variables";
 
-// Bootstrap
-@import "~bootstrap/scss/bootstrap";
+@import "reset";
+
+
+
+// Custom Bootstrap with only the elements we really use
+/* purgecss start ignore */
+@import "bootstrap";
 
 // unpoly
 @import "~unpoly/dist/unpoly.min.css";
-//@import "~unpoly/dist/unpoly-bootstrap3.min.css";
 
-@import "~@fullcalendar/core/main.css";
-@import "~@fullcalendar/daygrid/main.css";
-@import "~@fullcalendar/timegrid/main.css";
-@import "~@fullcalendar/list/main.css";
+/* purgecss end ignore */
 
 
 @import "agorakit";
+
 @import "actions";
 @import "comments";
-@import "dialog";
-@import "discussions";
+//@import "dialog";
+//@import "discussions";
 @import "files";
 @import "users";
 @import "settings";
@@ -31,5 +33,13 @@
 @import "navigation";
 
 
+
 /**Uncomment to add visual debugging */
 //@import "debug";
+
+
+@tailwind base;
+
+@tailwind components;
+
+@tailwind utilities;

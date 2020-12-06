@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Traits\HasControlledTags;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Cviebrock\EloquentTaggable\Taggable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,6 +18,7 @@ use App\Membership;
 
 
 
+
 class User extends Authenticatable
 {
     use Notifiable;
@@ -26,21 +28,13 @@ class User extends Authenticatable
     use Sluggable;
     use Taggable;
     use SearchableTrait;
+    use HasControlledTags;
 
-    /**
-    * The attributes that are mass assignable.
-    *
-    * @var array
-    */
+
     protected $fillable = [
         'name', 'username', 'email', 'password', 'provider', 'provider_id',
     ];
 
-    /**
-    * The attributes excluded from the model's JSON form.
-    *
-    * @var array
-    */
     protected $hidden = [
         'password', 'remember_token', 'token',
     ];
@@ -56,10 +50,10 @@ class User extends Authenticatable
     protected $keepRevisionOf = ['name', 'body', 'email', 'admin', 'address'];
 
     /**
-    * Searchable rules.
-    *
-    * @var array
-    */
+     * Searchable rules.
+     *
+     * @var array
+     */
     protected $searchable = [
         /*
         * Columns and their priority in search results.
@@ -76,27 +70,27 @@ class User extends Authenticatable
 
 
     /**
-    * The database table used by the model.
-    *
-    * @var string
-    */
+     * The database table used by the model.
+     *
+     * @var string
+     */
     protected $table = 'users';
 
     /**
-    * Get the route key for the model.
-    *
-    * @return string
-    */
+     * Get the route key for the model.
+     *
+     * @return string
+     */
     public function getRouteKeyName()
     {
         return 'username';
     }
 
     /**
-    * Return the sluggable configuration array for this model.
-    *
-    * @return array
-    */
+     * Return the sluggable configuration array for this model.
+     *
+     * @return array
+     */
     public function sluggable()
     {
         return [
@@ -109,7 +103,8 @@ class User extends Authenticatable
     }
 
     // Name of user should be set by user, but if we don't have it, we can just extract it from email
-    public function getNameAttribute($value) {
+    public function getNameAttribute($value)
+    {
         if ($value) {
             return $value;
         }
@@ -118,10 +113,10 @@ class User extends Authenticatable
     }
 
     /**
-    * Boot the model.
-    *
-    * @return void
-    */
+     * Boot the model.
+     *
+     * @return void
+     */
     public static function boot()
     {
         parent::boot();
@@ -137,24 +132,21 @@ class User extends Authenticatable
 
     public function getToken()
     {
-        if ($this->token)
-        {
+        if ($this->token) {
             return $this->token;
-        }
-        else
-        {
+        } else {
             $this->token = str_random(30);
             $this->save();
             return $this->token;
         }
-
     }
 
+
     /**
-    * Confirm the user.
-    *
-    * @return void
-    */
+     * Confirm the user.
+     *
+     * @return void
+     */
     public function confirmEmail()
     {
         $this->verified = true;
@@ -163,13 +155,14 @@ class User extends Authenticatable
     }
 
     /**
-    * Returns true if the user is member of $group.
-    */
+     *   Returns true if the user is member of $group.
+     */
     public function isMemberOf(Group $group)
     {
         // TODO refactor to avoid n+1
         // Always load membership with user
         $membership = Membership::where('user_id', '=', $this->id)->where('group_id', '=', $group->id)->first();
+
 
         if ($membership && $membership->membership >= Membership::MEMBER) {
             return true;
@@ -179,9 +172,29 @@ class User extends Authenticatable
     }
 
     /**
-    * Returns true if the user is admin of $group
-    * TODO : candidate for refactoring, generates a lot of n+1 slowness : Membership could be serialized in a field of the user DB and be readily available all the time.
-    */
+     *   Returns true if the user is $level of $group.
+     */
+    public function hasLevel($level, Group $group)
+    {
+        // TODO refactor to avoid n+1
+        // Always load membership with user
+        $membership = Membership::where('user_id', '=', $this->id)
+        ->where('group_id', '=', $group->id)
+        ->where('membership', $level)
+        ->first();
+
+
+        if ($membership) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if the user is admin of $group
+     * TODO : candidate for refactoring, generates a lot of n+1 slowness : Membership could be serialized in a field of the user DB and be readily available all the time.
+     */
     public function isAdminOf(Group $group)
     {
         foreach ($this->memberships as $membership) {
@@ -204,8 +217,8 @@ class User extends Authenticatable
     }
 
     /**
-    * Returns true if the user is admin.
-    */
+     * Returns true if the user is super admin.
+     */
     public function isAdmin()
     {
         if ($this->admin == 1) {
@@ -216,8 +229,8 @@ class User extends Authenticatable
     }
 
     /**
-    * Returns true if the user's email is verified.
-    */
+     * Returns true if the user's email is verified.
+     */
     public function isVerified()
     {
         if ($this->verified == 1) {
@@ -238,8 +251,8 @@ class User extends Authenticatable
     }
 
     /**
-    * The groups this user is part of.
-    */
+     * The groups this user is part of.
+     */
     public function groups()
     {
         return $this->belongsToMany(\App\Group::class, 'membership')
@@ -250,8 +263,8 @@ class User extends Authenticatable
     }
 
     /**
-    * The actions this user attends to.
-    */
+     * The actions this user attends to.
+     */
     public function actions()
     {
         return $this->belongsToMany(\App\Action::class);
@@ -259,7 +272,7 @@ class User extends Authenticatable
 
     public function isAttending(Action $action)
     {
-        return $action->users->contains($this->id);
+        return $action->attending->contains($this->id);
     }
 
     /**
@@ -286,32 +299,32 @@ class User extends Authenticatable
     }
 
     /**
-    * Discussions by this user.
-    */
+     * Discussions by this user.
+     */
     public function discussions()
     {
         return $this->hasMany(\App\Discussion::class);
     }
 
     /**
-    * Discussions by this user.
-    */
+     * Discussions by this user.
+     */
     public function comments()
     {
         return $this->hasMany(\App\Comment::class);
     }
 
     /**
-    * Discussions by this user.
-    */
+     * Discussions by this user.
+     */
     public function files()
     {
         return $this->hasMany(\App\File::class);
     }
 
     /**
-    * Activities by this user.
-    */
+     * Activities by this user.
+     */
     public function activities()
     {
         return $this->hasMany(\App\Activity::class)->orderBy('created_at', 'desc');
@@ -340,9 +353,9 @@ class User extends Authenticatable
     }
 
     /**
-    * Geocode the user
-    * Returns true if it worked, false if it didn't.
-    */
+     * Geocode the user
+     * Returns true if it worked, false if it didn't.
+     */
     public function geocode()
     {
         if ($this->address == '') {
@@ -365,8 +378,8 @@ class User extends Authenticatable
     }
 
     /**
-    * Returns the current preference $key for the user, $default if not set.
-    */
+     * Returns the current preference $key for the user, $default if not set.
+     */
     public function getPreference($key, $default = false)
     {
         $preferences = $this->preferences;
@@ -378,9 +391,9 @@ class User extends Authenticatable
     }
 
     /**
-    * Set the preference $key to $value for the user
-    * No validation is made on this layer, preferences are stored in the json text field of the DB.
-    */
+     * Set the preference $key to $value for the user
+     * No validation is made on this layer, preferences are stored in the json text field of the DB.
+     */
     public function setPreference($key, $value)
     {
         $preferences = $this->preferences;
@@ -389,5 +402,4 @@ class User extends Authenticatable
 
         return $this->save();
     }
-
 }

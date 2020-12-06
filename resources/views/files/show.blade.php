@@ -4,7 +4,7 @@
 
     @include('groups.tabs')
 
-    <div class="d-flex justify-content-between">
+    <div class="flex justify-between">
         <h3>
             {{$file->name}}
         </h3>
@@ -24,12 +24,6 @@
                         </a>
                     @endcan
 
-                    @can('update', $file)
-                        <a class="dropdown-item" up-modal=".dialog" up-closable="false" href="{{ route('tagger.index', ['files', $file->id]) }}?r={{rand(0,999999)}}">
-                            <i class="fa fa-tag"></i>
-                            {{__('Edit tags')}}
-                        </a>
-                    @endcan
 
                     @can('delete', $file)
                         <a class="dropdown-item" href="{{ route('groups.files.deleteconfirm', [$file->group, $file]) }}">
@@ -66,15 +60,15 @@
     </div>
 
 
-    <div class="row">
+    <div class="sm:flex">
 
-        <div class="col-3">
+        <div class="w:-1/2 sm:w-1/4 mr-4">
             <a href="{{ route('groups.files.download', [$group, $file]) }}">
-                <img src="{{ route('groups.files.preview', [$group, $file]) }}" class="img-fluid"/>
+                <img src="{{ route('groups.files.preview', [$group, $file]) }}" class="responsive"/>
             </a>
         </div>
 
-        <div class="col">
+        <div class="sm:w-3/4">
             <div class="mb-4">
                 <div>
                     <a up-follow href="{{ route('users.show', [$file->user]) }}">

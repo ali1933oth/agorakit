@@ -119,11 +119,6 @@ Route::group(['middleware' => ['web']], function () {
     Route::get('tags', 'TagController@index')->name('tags.index');
     Route::get('tags/{tag}', 'TagController@show')->name('tags.show');
 
-    /* Tagger, our new tag manager */
-
-    Route::get('/tagger/{type}/{id}', 'TaggerController@index')->name('tagger.index');
-    Route::get('/tagger/{type}/{id}/tag/{name}', 'TaggerController@tag')->name('tagger.tag');
-    Route::post('/tagger/{type}/{id}', 'TaggerController@add')->name('tagger.add');
 
 
     /* Drawer navigation */
@@ -164,18 +159,11 @@ Route::group(['middleware' => ['web']], function () {
     Route::get('invites/{membership}/accept', 'InviteController@accept')->name('invites.accept');
     Route::get('invites/{membership}/deny', 'InviteController@deny')->name('invites.deny');
 
-    Route::get('invites/register', 'InviteController@inviteForm')->name('invites.form');
-    Route::post('invites/register', 'InviteController@inviteRegister')->name('invites.register');
+    // Allows invited users to accept or deny invitations from a signed link sent to their mailbox
+    Route::get('invite/{membership}/accept/signed', 'InviteController@acceptWithSignature')->name('invite.accept.signed');
+    Route::get('invite/{membership}/deny/signed', 'InviteController@denyWithSignature')->name('invite.deny.signed');
 
-    /*
-    Route::get('groups/{group}/invite/confirm/{token}', 'InviteController@inviteConfirm')->name('groups.invite.confirm');
-    Route::post('groups/{group}/invite/confirm/{token}', 'InviteController@inviteRegister')->name('groups.invite.register');
-    */
-
-    // Join and apply for a group
-    Route::get('groups/{group}/join', 'GroupMembershipController@create')->name('groups.membership.create');
-    Route::post('groups/{group}/join', 'GroupMembershipController@store')->name('groups.membership.store');
-
+    
     // General discussion create route
     Route::get('discussions/create', 'GroupDiscussionController@create')->name('discussions.create');
     Route::post('discussions/create', 'GroupDiscussionController@store')->name('discussions.store');
@@ -237,40 +225,64 @@ Route::group(['middleware' => ['web']], function () {
         Route::get('discussions/mention', 'MentionController@discussions')->name('.discussions.mention');
         Route::get('files/mention', 'MentionController@files')->name('.files.mention');
 
+
+        /***************** Memberships for users ***********/
+
+         // Member's list
+         Route::get('users', 'GroupMembershipController@index')->name('.users.index');
+
+         // Join and apply for a group
+        Route::get('join', 'GroupMembershipController@create')->name('groups.membership.create');
+        Route::post('join', 'GroupMembershipController@store')->name('groups.membership.store');
+
+
         // preferences and leave group
-        //Route::get('preferences', 'GroupMembershipController@edit')->name('.mymembership.edit');
-        //Route::post('preferences', 'GroupMembershipController@update')->name('.mymembership.update');
+        Route::get('preferences', 'GroupMembershipController@edit')->name('.mymembership.edit');
+        Route::post('preferences', 'GroupMembershipController@update')->name('.mymembership.update');
         Route::get('leave', 'GroupMembershipController@destroyConfirm')->name('.mymembership.deleteconfirm');
         Route::post('leave', 'GroupMembershipController@destroy')->name('.mymembership.delete');
 
-        // edit membership
-        Route::get('membership/{membership?}', 'GroupMembershipController@edit')->name('.membership.edit');
-        Route::post('membership/{membership?}', 'GroupMembershipController@update')->name('.membership.update');
+         // In the case of closed group, we show an how to join message (not in use currently)
+         Route::get('howtojoin', 'GroupMembershipController@howToJoin')->name('.howtojoin');
+
+
+        /************** Memberships for group admins  ***********/
+        
+        // mass invite
+        Route::get('membership/create', 'GroupMassMembershipController@create')->name('.membership.create');
+        Route::post('membership/store', 'GroupMassMembershipController@store')->name('.membership.store');
+
+        // edit existing memberships
+        Route::get('membership/{membership}', 'GroupMembershipAdminController@edit')->name('.membership.edit');
+        Route::post('membership/{membership}', 'GroupMembershipAdminController@update')->name('.membership.update');
+        
+
+
 
         // Stats
         Route::get('insights', 'GroupInsightsController@index')->name('.insights');
-
-        // Membership mass admin (add multiple users at once to a groupe)
-        Route::get('massmembership/create', 'GroupMassMembershipController@create')->name('.massmembership.create');
-        Route::post('massmembership/store', 'GroupMassMembershipController@store')->name('.massmembership.store');
+        
 
         // Invites
         Route::get('invite', 'InviteController@invite')->name('.invite.form');
         Route::post('invite', 'InviteController@sendInvites')->name('.invite');
 
-        // In the case of closed group, we show an how to join message (not in use currently)
-        Route::get('howtojoin', 'GroupMembershipController@howToJoin')->name('.howtojoin');
 
-        // Members
-        Route::get('users', 'GroupMembershipController@index')->name('.users.index');
+
+
+
+        // Stats
+        Route::get('insights', 'GroupInsightsController@index')->name('.insights');
+
+        
+       
 
         // Maps
         Route::get('map', 'GroupMapController@index')->name('.map');
         Route::get('map.geojson', 'GroupMapController@geoJson')->name('.map.geojson');
 
 
-        //Route::get('{type}/{id}/tag', 'TagController@edit')->name('.tags.edit');
-        //Route::post('{type}/{id}/tag', 'TagController@update')->name('.tags.store');
+
 
         // Discussions
         Route::get('discussions', 'GroupDiscussionController@index')->name('.discussions.index');
@@ -290,12 +302,6 @@ Route::group(['middleware' => ['web']], function () {
         // Discussion history
         Route::get('discussions/{discussion}/history', 'GroupDiscussionController@history')->name('.discussions.history');
 
-        // Discussion tags
-        Route::get('discussions/{discussion}/tags', 'DiscussionTagController@edit')->name('.discussions.tags.edit');
-        Route::post('discussions/{discussion}/tags', 'DiscussionTagController@update')->name('.discussions.tags.update');
-
-        Route::post('discussions/{discussion}/tags/create', 'DiscussionTagController@create')->name('.discussions.tags.create');
-        //Route::get('discussions/{discussion}/tags/delete/{tag}', 'DiscussionTagController@destroy')->name('.discussions.tags.delete');
 
         // Comments
         Route::post('discussions/{discussion}/reply', 'CommentController@store')->name('.discussions.reply');
@@ -319,12 +325,10 @@ Route::group(['middleware' => ['web']], function () {
         Route::delete('actions/{action}/delete', 'GroupActionController@destroy')->name('.actions.delete');
         Route::get('actions/{action}/history', 'GroupActionController@history')->name('.actions.history');
 
-        // Action (un)attending
-        Route::get('actions/{action}/attend', 'ActionUserController@create')->name('.actions.attend');
-        Route::get('actions/{action}/unattend', 'ActionUserController@destroyConfirm')->name('.actions.unattend');
-
-        Route::post('actions/{action}/attend', 'ActionUserController@store')->name('.actions.attend.store');
-        Route::post('actions/{action}/unattend', 'ActionUserController@destroy')->name('.actions.unattend.store');
+        // Action participation
+        Route::get('actions/{action}/participation', 'ParticipationController@edit')->name('.actions.participation');
+        Route::post('actions/{action}/participation', 'ParticipationController@update')->name('.actions.participation.update');
+        
 
         // Files
         Route::get('files', 'GroupFileController@index')->name('.files.index');
@@ -347,14 +351,9 @@ Route::group(['middleware' => ['web']], function () {
         Route::get('files/{file}/icon', 'FileDownloadController@icon')->name('.files.icon');
 
         // Allowed Tags
-        Route::get('tags', 'GroupTagController@index')->name('.tags.index');
-        Route::get('tags/create', 'GroupTagController@create')->name('.tags.create');
-        Route::post('tags/create', 'GroupTagController@store')->name('.tags.store');
-        Route::get('tags/{tag}', 'GroupTagController@show')->name('.tags.show');
-        Route::get('tags/{tag}/edit', 'GroupTagController@edit')->name('.tags.edit');
-        Route::post('tags/{tag}', 'GroupTagController@update')->name('.tags.update');
-        Route::get('tags/{tag}/delete', 'GroupTagController@destroyConfirm')->name('.tags.deleteconfirm');
-        Route::delete('tags/{tag}/delete', 'GroupTagController@destroy')->name('.tags.delete');
+        Route::get('tags', 'GroupTagController@edit')->name('.tags.edit');
+        Route::post('tags', 'GroupTagController@update')->name('.tags.update');
+
 
         // Permissions
         Route::get('permissions', 'GroupPermissionController@index')->name('.permissions.index');

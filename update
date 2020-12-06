@@ -1,6 +1,7 @@
 php artisan down
 
 git pull
+
 composer install
 php artisan migrate --force
 

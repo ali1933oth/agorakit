@@ -1,26 +1,20 @@
 <a name="comment_{{$comment->id}}"></a>
 
-<div class="mb-3 pb-3 comment
-@if ($comment_key + 2 > $read_comments) unread @else read @endif" @if ($comment_key + 2 == $read_comments) id="unread" @endif>
+<div class="mb-3 pb-3 comment">
 
-    <div class="d-flex">
+    <div class="flex">
 
-        <div class="avatar mr-2"><img src="{{route('users.cover', [$comment->user, 'small'])}}" class="rounded-circle"/></div>
+        <img src="{{route('users.cover', [$comment->user, 'small'])}}" class="rounded-full h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 mr-2 sm:mr-4"/>
 
-        <div class="w-100">
+        <div class="w-100 flex-grow mb-2">
             <div class="d-flex align-items-center">
                 <div class="user">
                     <a up-follow href="{{ route('users.show', [$comment->user]) }}">{{$comment->user->name}}</a>
                 </div>
-                <div class="meta ml-2">
+                <div class="text-xs text-gray-600">
                     {{$comment->created_at->diffForHumans()}}
                 </div>
             </div>
-
-
-            <div class="body">{!! filter($comment->body) !!}</div>
-
-
         </div>
 
         @can('update', $comment)
@@ -46,6 +40,10 @@
             </div>
         @endcan
 
+    </div>
+
+    <div class="body sm:ml-16 lg:mr-40">
+    {!! filter($comment->body) !!}
     </div>
 
 

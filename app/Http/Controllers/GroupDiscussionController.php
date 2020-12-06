@@ -27,19 +27,18 @@ class GroupDiscussionController extends Controller
     {
         $this->authorize('view-discussions', $group);
 
-        if ($group->tagsAreLimited()) {
-            $tags = $group->allowedTags();
-        } else {
-            $tags = $group->tagsInDiscussions();
-        }
+        $discussion = new Discussion;
+        $discussion->group()->associate($group);
 
+        // for the tag filter frop down
+        $tags = $discussion->getTagsInUse();
         $tag = $request->get('tag');
 
         if (\Auth::check()) {
             $discussions =
             $group->discussions()
             ->has('user')
-            ->with('userReadDiscussion', 'user', 'group', 'tags')
+            ->with('userReadDiscussion', 'group', 'user', 'tags', 'comments')
             ->withCount('comments')
             ->orderBy('status', 'desc')
             ->orderBy('updated_at', 'desc')
@@ -70,12 +69,15 @@ class GroupDiscussionController extends Controller
             $this->authorize('create-discussion', $group);
         }
 
-        $tags = $group->tagsUsed();
+        $discussion = new Discussion;
+        $discussion->group()->associate($group);
+
         $title = trans('group.create_group_discussion');
 
         return view('discussions.create')
         ->with('group', $group)
-        ->with('all_tags', $tags)
+        ->with('allowedTags', $discussion->getAllowedTags())
+        ->with('newTagsAllowed', $discussion->areNewTagsAllowed())
         ->with('tab', 'discussion')
         ->with('title', $title);
     }
@@ -156,22 +158,23 @@ class GroupDiscussionController extends Controller
         $this->authorize('view', $discussion);
 
         // if user is logged in, we update the read count for this discussion.
-        // just before that, we save the number of already read comments in $read_comments to be used in the view to scroll to the first unread comments
+        // just before that, we save the number of already read comments in $read_comments 
+        // to be used in the view to scroll to the first unread comments
         if (Auth::check()) {
-            $UserReadDiscussion = \App\UserReadDiscussion::firstOrNew(['discussion_id' => $discussion->id, 'user_id' => Auth::user()->id]);
-
-            $read_comments = $UserReadDiscussion->read_comments;
-            $UserReadDiscussion->read_comments = $discussion->total_comments;
-            $UserReadDiscussion->read_at = Carbon::now();
-            $UserReadDiscussion->save();
-        } else {
-            $read_comments = 0;
+            $unread_count = $discussion->unReadCount();
+            $discussion->markAsRead();
         }
+        else {
+            $unread_count = 0;
+        }
+
+        $read_count = $discussion->comments->count() - $unread_count;
 
         return view('discussions.show')
         ->with('title', $group->name.' - '.$discussion->name)
         ->with('discussion', $discussion)
-        ->with('read_comments', $read_comments)
+        ->with('unread_count', $unread_count)
+        ->with('read_count', $read_count)
         ->with('group', $group)
         ->with('tab', 'discussion');
     }
@@ -187,13 +190,12 @@ class GroupDiscussionController extends Controller
     {
         $this->authorize('update', $discussion);
 
-        $tags = $group->tagsUsed();
-
         return view('discussions.edit')
         ->with('discussion', $discussion)
         ->with('group', $group)
-        ->with('all_tags', $tags)
-        ->with('model_tags', $discussion->tags)
+        ->with('allowedTags', $discussion->getAllowedTags())
+        ->with('newTagsAllowed', $discussion->areNewTagsAllowed())
+        ->with('selectedTags', $discussion->getSelectedTags())
         ->with('tab', 'discussion');
     }
 

@@ -1,66 +1,96 @@
-<div up-expand>
-    <div class="mb-3 card tag-group @foreach ($group->tags as $tag)tag-{{$tag->tag_id}} @endforeach @if ($group->isArchived()) status-archived @endif">
+ <div up-expand
+     class="relative rounded-md border-gray-300 border flex flex-col justify-start @if ($group->isArchived()) status-archived @endif">
 
-        <a up-follow href="{{ action('GroupController@show', $group) }}">
-            @if ($group->hasCover())
-                <img class="card-img-top" src="{{ route('groups.cover.medium', $group)}}" />
-            @else
-                <img class="card-img-top" src="/images/group.svg"/>
-            @endif
-        </a>
+     @auth
+         @if(Auth::user()->isMemberOf($group))
+             <div
+                 class="absolute top-0 right-0 py-1 px-2 bg-gray-700 text-gray-200 capitalize rounded-full m-2 text-xs shadow">
+                 {{ __('membership.member') }}
+             </div>
+         @endif
 
-        <div class="card-body">
-            <h5 class="card-title">
-                <a up-follow href="{{ action('GroupController@show', $group) }}">
-                    {{ $group->name }}
-                </a>
-                @if ($group->isOpen())
-                    <i class="fa fa-globe" title="{{trans('group.open')}}"></i>
-                @elseif ($group->isClosed())
-                    <i class="fa fa-lock" title="{{trans('group.closed')}}"></i>
-                @else
-                    <i class="fa fa-eye-slash" title="{{trans('group.secret')}}"></i>
-                @endif
-                @if ($group->isPinned())
-                    <div class="badge badge-primary" style="min-width: 2em; margin: 0 2px; font-size: 0.5em;">{{__('Pinned')}}</div>
-                @endif
-                @if ($group->isArchived())
-                    <div class="badge badge-muted" style="min-width: 2em; margin: 0 2px; font-size: 0.5em;">{{__('Archived')}}</div>
-                @endif
-            </h5>
-            <p class="card-text">
-                <div style="max-height:8em; overflow: hidden">
-                    {{summary($group->body) }}
-                </div>
-                <span class="badge badge-secondary"><i class="fa fa-users"></i> {{$group->users()->count()}}</span>
-                <span class="badge badge-secondary"><i class="fa fa-comments"></i> {{$group->discussions()->count()}}</span>
-                <span class="badge badge-secondary"><i class="fa fa-calendar"></i> {{$group->actions()->count()}}</span>
-                <div style="max-height:3.8em; overflow: hidden">
-                    @foreach ($group->tags as $tag)
-                        @include('tags.tag')
-                    @endforeach
-                </div>
-            </p>
+         @if(Auth::user()->hasLevel(\App\Membership::CANDIDATE, $group))
+             <div
+                 class="absolute top-0 right-0 py-1 px-2 bg-gray-700 text-gray-200 capitalize rounded-full m-2 text-xs shadow">
+                 {{ __('membership.candidate') }}
+             </div>
+         @endif
+     @endauth
 
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="btn-group">
-                    <a class="btn btn-primary" href="{{ action('GroupController@show', $group) }}"></i>
-                        {{ trans('messages.visit') }}
-                    </a>
+     @if($group->isPinned())
+         <div class="absolute top-0 left-0 py-1 px-2 bg-gray-700 text-gray-200 capitalize rounded-full m-2 text-xs shadow"
+             title="{{ trans('group.pinned') }}">
+             <i class="far fa-star"></i>
+         </div>
+     @endif
 
-                    @unless ($group->isMember())
-                        @can ('join', $group)
-                            <a class="btn btn-secondary" href="{{ action('GroupMembershipController@store', $group) }}">
-                                {{ trans('group.join') }}
-                            </a>
-                        @endcan
-                    @endunless
-                </div>
-                <small class="text-muted">{{ $group->updated_at->diffForHumans() }}</small>
+     @if($group->isArchived())
+         <div class="absolute top-0 left-0 py-1 px-2 bg-gray-700 text-gray-200 capitalize rounded-full m-2 text-xs shadow"
+             title="{{ trans('group.archived') }}">
+             <i class="fas fa-archive"></i>
+         </div>
+     @endif
+
+    <a href="{{ action('GroupController@show', $group) }}">
+     @if($group->hasCover())
+         <img class="object-cover w-full h-40 rounded rounded-b-none"
+             src="{{ route('groups.cover.medium', $group) }}" />
+     @else
+         <img class="object-cover w-full h-40 rounded rounded-b-none" src="/images/group.svg" />
+     @endif
+     </a>
+
+
+     <div class="p-4 flex flex-col justify-between h-full">
+         <h2 class="text-xl text-gray-800">
+             {{ $group->name }}
+             @if($group->isOpen())
+                 <i class="text-xs text-gray-500 fa fa-globe" title="{{ trans('group.open') }}"></i>
+             @elseif($group->isClosed())
+                 <i class="text-xs text-gray-500 fa fa-lock" title="{{ trans('group.closed') }}"></i>
+             @else
+                 <i class="text-xs text-gray-500 fa fa-eye-slash"
+                     title="{{ trans('group.secret') }}"></i>
+             @endif
+         </h2>
+         <div class="text-gray-700 mt-1 text-sm sm:text-xs flex-grow">
+             {{ summary($group->body) }}
+
+             @if($group->tags->count() > 0)
+            <div class="text-gray-600 text-xs my-2">
+                @foreach($group->getSelectedTags() as $tag)
+                    @include('tags.tag')
+                @endforeach
             </div>
+        @endif
+        
+         </div>
+
+         
 
 
+         <div class="text-xs text-gray-700 my-2 flex align-middle space-x-5">
 
-        </div>
-    </div>
-</div>
+             <div>
+                 <i class="far fa-comments mr-1"></i>
+                 <span> {{ $group->discussions->count() }}</span>
+             </div>
+
+             <div>
+                 <i class="far fa-calendar-alt mr-1"></i>
+                 <span>{{ $group->actions->count() }}</span>
+             </div>
+             <div>
+                 <i class="fas fa-users mr-1"></i>
+                 <span>{{ $group->users->count() }}</span>
+             </div>
+
+             <div>
+                 <i class="far fa-lightbulb mr-1"></i>
+                 <span>{{ $group->updated_at->diffForHumans() }}</span>
+             </div>
+
+         </div>
+     </div>
+
+ </div>

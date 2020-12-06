@@ -79,7 +79,7 @@ class GroupPolicy extends BasePolicy
     }
 
     /**
-    * A group admin can delete a user
+    * A group admin can delete a group
     */
     public function delete(User $user, Group $group)
     {
@@ -133,15 +133,6 @@ class GroupPolicy extends BasePolicy
         return $this->getPermissionsFor($user, $group)->contains('create-discussion');
     }
 
-    public function createTag(User $user, Group $group)
-    {
-        if ($group->tagsAreLimited())
-        {
-            return $user->isAdminOf($group);
-        }
-
-        return $user->isMemberOf($group);
-    }
 
 
     /**
@@ -258,5 +249,10 @@ class GroupPolicy extends BasePolicy
         }
 
         return false;
+    }
+
+    public function changeGroupStatus(User $user, Group $group)
+    {
+        return $user->isAdmin();
     }
 }
