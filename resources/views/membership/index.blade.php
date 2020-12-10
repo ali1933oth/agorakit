@@ -37,7 +37,6 @@
                     <th class="min-tablet" data-priority="2">{{ trans('messages.status') }}</th>
 
                     @can('manage-membership', $group)
-                        <th class="min-tablet-l" data-priority="2">{{ trans('messages.email') }}</th>
                         <th class="min-tablet-l" data-priority="2">{{ trans('messages.notifications_interval') }}</th>
                         <th data-priority="1" style="min-width: 2rem"></th>
                     @endcan
@@ -126,9 +125,6 @@
                         </td>
 
                         @can('manage-membership', $group)
-                            <td>
-                                {{ $membership->user->email }}
-                            </td>
                             <td data-order="{{ $membership->notification_interval }}">
                                 {{ minutesToInterval($membership->notification_interval) }}
                             </td>
