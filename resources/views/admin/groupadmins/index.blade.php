@@ -15,7 +15,6 @@
             <thead class="thead-dark">
                 <tr>
                     <th data-priority="1">{{ trans('messages.name') }}</th>
-                    <th data-priority="1" style="max-width: 150px; overflow: hidden;text-overflow: ellipsis;">{{ trans('messages.email') }}</th>
                     <th>{{ trans('messages.registration_time') }}</th>
                     <th>{{ trans('messages.last_activity') }}</th>
                     <th data-priority="1" style="max-width: 50px; overflow: hidden;text-overflow: ellipsis;">{{ trans('messages.admin') }}</th>
@@ -30,10 +29,6 @@
                     <tr>
                         <td>
                             <a up-follow href="{{ route('users.show', $user) }}"> {{ $user->name }}</a>
-                        </td>
-
-                        <td style="max-width: 150px; overflow: hidden;text-overflow: ellipsis;">
-                            <a up-follow href="{{ route('users.show', $user) }}"> {{ $user->email }}</a>
                         </td>
 
                         <td data-order="{{ $user->created_at }}">
